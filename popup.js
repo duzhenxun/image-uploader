@@ -1,200 +1,162 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-  const uploadList = document.getElementById('uploadList');
-  const settingsBtn = document.getElementById('settingsBtn');
-  const closeBtn = document.getElementById('closeBtn');
-  const mainView = document.getElementById('mainView');
-  const settingsView = document.getElementById('settingsView');
-  const serviceType = document.getElementById('serviceType');
-  const saveSettings = document.getElementById('saveSettings');
-  
-  // 更新相关元素
-  const updateBanner = document.getElementById('updateBanner');
-  const updateVersion = document.getElementById('updateVersion');
-  const updateBtn = document.getElementById('updateBtn');
-  const updateCloseBtn = document.getElementById('updateCloseBtn');
-
-  // 关闭按钮
-  closeBtn.addEventListener('click', () => {
-    window.close();
-  });
-
-  // 配置视图切换
-  settingsBtn.addEventListener('click', () => {
-    if (settingsView.style.display === 'none') {
-      mainView.style.display = 'none';
-      settingsView.style.display = 'block';
-      loadSettings();
-    } else {
-      mainView.style.display = 'block';
-      settingsView.style.display = 'none';
+  // 存储设置
+  let settings = {
+    serviceType: 'custom',
+    imgur: {
+      clientId: ''
+    },
+    custom: {
+      uploadUrl: '',
+      responsePath: ''
     }
-  });
+  };
 
-  // 服务类型切换
-  serviceType.addEventListener('change', () => {
-    document.querySelectorAll('.service-config').forEach(config => {
-      config.style.display = 'none';
-    });
-    document.getElementById(`${serviceType.value}Config`).style.display = 'block';
-  });
+  // DOM元素
+  const elements = {
+    mainView: document.getElementById('mainView'),
+    settingsView: document.getElementById('settingsView'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    closeBtn: document.getElementById('closeBtn'),
+    dropZone: document.getElementById('dropZone'),
+    fileInput: document.getElementById('fileInput'),
+    uploadList: document.getElementById('uploadList'),
+    serviceType: document.getElementById('serviceType'),
+    imgurSettings: document.getElementById('imgurSettings'),
+    customSettings: document.getElementById('customSettings'),
+    imgurClientId: document.getElementById('imgurClientId'),
+    customUploadUrl: document.getElementById('customUploadUrl'),
+    customResponsePath: document.getElementById('customResponsePath'),
+    saveSettings: document.getElementById('saveSettings'),
+    updateBanner: document.getElementById('updateBanner'),
+    updateVersion: document.getElementById('updateVersion'),
+    updateBtn: document.getElementById('updateBtn'),
+    updateCloseBtn: document.getElementById('updateCloseBtn')
+  };
 
-  // 保存设置
-  saveSettings.addEventListener('click', () => {
-    const settings = {
-      service: serviceType.value,
-      config: {}
-    };
-
-    switch (serviceType.value) {
-      case 'aliyun':
-        settings.config = {
-          accessKey: document.getElementById('aliyunAccessKey').value,
-          secretKey: document.getElementById('aliyunSecretKey').value,
-          bucket: document.getElementById('aliyunBucket').value,
-          region: document.getElementById('aliyunRegion').value
-        };
-        break;
-      case 'qiniu':
-        settings.config = {
-          accessKey: document.getElementById('qiniuAccessKey').value,
-          secretKey: document.getElementById('qiniuSecretKey').value,
-          bucket: document.getElementById('qiniuBucket').value,
-          domain: document.getElementById('qiniuDomain').value
-        };
-        break;
-      case 'imgur':
-        settings.config = {
-          clientId: document.getElementById('imgurClientId').value
-        };
-        break;
-      case 'custom':
-        settings.config = {
-          apiUrl: document.getElementById('customApiUrl').value,
-          headers: document.getElementById('customHeaders').value,
-          responsePath: document.getElementById('customResponsePath').value
-        };
-        break;
-    }
-
-    chrome.storage.sync.set({ settings }, () => {
-      alert('设置已保存');
-      mainView.style.display = 'block';
-      settingsView.style.display = 'none';
-    });
-  });
+  // 初始化
+  async function init() {
+    loadSettings();
+    setupEventListeners();
+    checkForUpdates();
+  }
 
   // 加载设置
-  function loadSettings() {
-    chrome.storage.sync.get('settings', (data) => {
-      if (data.settings) {
-        serviceType.value = data.settings.service;
-        serviceType.dispatchEvent(new Event('change'));
+  async function loadSettings() {
+    const savedSettings = await chrome.storage.local.get('settings');
+    if (savedSettings.settings) {
+      settings = savedSettings.settings;
+      updateSettingsUI();
+    }
+  }
 
-        const config = data.settings.config;
-        switch (data.settings.service) {
-          case 'aliyun':
-            document.getElementById('aliyunAccessKey').value = config.accessKey || '';
-            document.getElementById('aliyunSecretKey').value = config.secretKey || '';
-            document.getElementById('aliyunBucket').value = config.bucket || '';
-            document.getElementById('aliyunRegion').value = config.region || '';
-            break;
-          case 'qiniu':
-            document.getElementById('qiniuAccessKey').value = config.accessKey || '';
-            document.getElementById('qiniuSecretKey').value = config.secretKey || '';
-            document.getElementById('qiniuBucket').value = config.bucket || '';
-            document.getElementById('qiniuDomain').value = config.domain || '';
-            break;
-          case 'imgur':
-            document.getElementById('imgurClientId').value = config.clientId || '';
-            break;
-          case 'custom':
-            document.getElementById('customApiUrl').value = config.apiUrl || '';
-            document.getElementById('customHeaders').value = config.headers || '';
-            document.getElementById('customResponsePath').value = config.responsePath || '';
-            break;
-        }
+  // 更新设置UI
+  function updateSettingsUI() {
+    elements.serviceType.value = settings.serviceType;
+    elements.imgurClientId.value = settings.imgur.clientId;
+    elements.customUploadUrl.value = settings.custom.uploadUrl;
+    elements.customResponsePath.value = settings.custom.responsePath;
+    updateServiceSettingsVisibility();
+  }
+
+  // 更新服务设置可见性
+  function updateServiceSettingsVisibility() {
+    elements.imgurSettings.style.display = settings.serviceType === 'imgur' ? 'block' : 'none';
+    elements.customSettings.style.display = settings.serviceType === 'custom' ? 'block' : 'none';
+  }
+
+  // 保存设置
+  async function saveSettings() {
+    settings = {
+      serviceType: elements.serviceType.value,
+      imgur: {
+        clientId: elements.imgurClientId.value.trim()
+      },
+      custom: {
+        uploadUrl: elements.customUploadUrl.value.trim(),
+        responsePath: elements.customResponsePath.value.trim()
       }
-    });
+    };
+  
+    await chrome.storage.local.set({ settings });
+    showMainView();
   }
 
-  // 检查是否有更新
-  chrome.storage.local.get(['updateAvailable', 'updateInfo'], function(result) {
-    if (result.updateAvailable && result.updateInfo) {
-      showUpdateBanner(result.updateInfo);
-    }
-  });
+  // 设置事件监听器
+  function setupEventListeners() {
+    // 视图切换
+    elements.settingsBtn.addEventListener('click', showSettingsView);
+    elements.closeBtn.addEventListener('click', () => window.close());
+    elements.serviceType.addEventListener('change', updateServiceSettingsVisibility);
+    elements.saveSettings.addEventListener('click', saveSettings);
 
-  // 监听来自background的更新消息
-  window.addEventListener('message', function(event) {
-    if (event.data.type === 'UPDATE_AVAILABLE') {
-      showUpdateBanner(event.data.data);
-    }
-  });
+    // 文件上传相关
+    elements.dropZone.addEventListener('click', () => elements.fileInput.click());
+    elements.dropZone.addEventListener('dragover', handleDragOver);
+    elements.dropZone.addEventListener('drop', handleDrop);
+    elements.fileInput.addEventListener('change', handleFileSelect);
+    document.addEventListener('paste', handlePaste);
 
-  // 显示更新横幅
-  function showUpdateBanner(updateInfo) {
-    updateVersion.textContent = `v${updateInfo.version}`;
-    updateBanner.style.display = 'flex';
-    
-    // 更新按钮点击事件
-    updateBtn.onclick = function() {
-      window.open(updateInfo.url, '_blank');
-    };
-    
-    // 关闭按钮点击事件
-    updateCloseBtn.onclick = function() {
-      updateBanner.style.display = 'none';
-      // 24小时内不再显示
-      chrome.storage.local.set({
-        updateDismissed: Date.now()
-      });
-    };
+    // 更新相关
+    elements.updateBtn.addEventListener('click', handleUpdate);
+    elements.updateCloseBtn.addEventListener('click', () => elements.updateBanner.style.display = 'none');
   }
 
-  // 文件拖放处理
-  dropZone.addEventListener('dragover', (e) => {
+  // 显示设置视图
+  function showSettingsView() {
+    elements.mainView.style.display = 'none';
+    elements.settingsView.style.display = 'block';
+  }
+
+  // 显示主视图
+  function showMainView() {
+    elements.mainView.style.display = 'block';
+    elements.settingsView.style.display = 'none';
+  }
+
+  // 处理文件拖放
+  function handleDragOver(e) {
     e.preventDefault();
-    dropZone.style.borderColor = '#666';
-  });
+    e.stopPropagation();
+    elements.dropZone.classList.add('dragover');
+  }
 
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.style.borderColor = '#ccc';
-  });
-
-  dropZone.addEventListener('drop', (e) => {
+  function handleDrop(e) {
     e.preventDefault();
-    dropZone.style.borderColor = '#ccc';
-    handleFiles(Array.from(e.dataTransfer.files));
-  });
+    e.stopPropagation();
+    elements.dropZone.classList.remove('dragover');
+  
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFiles(Array.from(files));
+    }
+  }
 
-  // 点击上传
-  dropZone.addEventListener('click', () => {
-    fileInput.click();
-  });
+  // 处理文件选择
+  function handleFileSelect(e) {
+    const files = e.target.files;
+    if (files.length > 0) {
+      handleFiles(Array.from(files));
+    }
+  }
 
-  fileInput.addEventListener('change', () => {
-    handleFiles(Array.from(fileInput.files));
-    fileInput.value = '';
-  });
-
-  // 粘贴上传
-  document.addEventListener('paste', (e) => {
+  // 处理粘贴
+  async function handlePaste(e) {
     const items = e.clipboardData.items;
     const files = [];
-    
+  
     for (let item of items) {
       if (item.type.indexOf('image') !== -1) {
         const file = item.getAsFile();
-        files.push(file);
+        if (file) {
+          files.push(file);
+        }
       }
     }
-    
+  
     if (files.length > 0) {
       handleFiles(files);
     }
-  });
+  }
 
   // 处理文件上传
   async function handleFiles(files) {
@@ -202,195 +164,219 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!file.type.startsWith('image/')) {
         continue;
       }
-
-      const item = createUploadItem(file);
-      uploadList.insertBefore(item, uploadList.firstChild);
-
+    
+      const uploadItem = createUploadItem(file);
+      elements.uploadList.insertBefore(uploadItem.element, elements.uploadList.firstChild);
+    
       try {
-        const url = await uploadFile(file);
-        updateUploadItem(item, url);
+        const url = await uploadFile(file, uploadItem);
+        updateUploadItemSuccess(uploadItem, url);
       } catch (error) {
-        updateUploadItem(item, null, error.message);
+        updateUploadItemError(uploadItem, error.message);
       }
     }
   }
 
-  // 创建上传项
+  // 创建上传项UI
   function createUploadItem(file) {
-    const item = document.createElement('div');
-    item.className = 'upload-item';
-    item.innerHTML = `
-      <img src="${URL.createObjectURL(file)}">
-      <div class="url">上传中...</div>
-    `;
-    return item;
+    const element = document.createElement('div');
+    element.className = 'upload-item';
+  
+    const info = document.createElement('div');
+    info.className = 'info';
+  
+    const fileName = document.createElement('div');
+    fileName.className = 'filename';
+    fileName.textContent = file.name;
+  
+    const url = document.createElement('div');
+    url.className = 'url';
+    url.style.display = 'none';
+  
+    info.appendChild(fileName);
+    info.appendChild(url);
+  
+    const status = document.createElement('div');
+    status.className = 'status';
+    status.textContent = '上传中...';
+  
+    const progress = document.createElement('div');
+    progress.className = 'progress';
+  
+    element.appendChild(info);
+    element.appendChild(status);
+    element.appendChild(progress);
+  
+    return { element, status, progress, url };
   }
 
-  // 更新上传项
-  function updateUploadItem(item, url, error) {
-    if (url) {
-      const urlInput = document.createElement('input');
-      urlInput.type = 'text';
-      urlInput.value = url;
-      urlInput.readOnly = true;
-      
-      const copyBtn = document.createElement('button');
-      copyBtn.textContent = '复制';
-      copyBtn.onclick = async () => {
-        try {
-          await navigator.clipboard.writeText(url);
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = '已复制!';
-          setTimeout(() => {
-            copyBtn.textContent = originalText;
-          }, 1500);
-        } catch (err) {
-          console.error('复制失败:', err);
-          alert('复制失败，请手动复制');
-        }
-      };
+  // 更新上传成功状态
+  function updateUploadItemSuccess(uploadItem, imageUrl) {
+    uploadItem.element.classList.remove('error');
+    uploadItem.status.textContent = '点击复制';
+    uploadItem.progress.style.width = '100%';
+  
+    // 显示URL
+    uploadItem.url.textContent = imageUrl;
+    uploadItem.url.style.display = 'block';
+  
+    uploadItem.element.addEventListener('click', () => {
+      navigator.clipboard.writeText(imageUrl);
+      uploadItem.status.textContent = '已复制';
+      setTimeout(() => {
+        uploadItem.status.textContent = '点击复制';
+      }, 1000);
+    });
+  }
 
-      const urlContainer = item.querySelector('.url');
-      urlContainer.innerHTML = '';
-      urlContainer.appendChild(urlInput);
-      urlContainer.appendChild(copyBtn);
-    } else {
-      item.querySelector('.url').innerHTML = `
-        <span style="color: red;">上传失败: ${error}</span>
-      `;
-    }
+  // 更新上传错误状态
+  function updateUploadItemError(uploadItem, error) {
+    uploadItem.element.classList.add('error');
+    uploadItem.status.textContent = `错误: ${error}`;
+    uploadItem.progress.style.width = '100%';
   }
 
   // 上传文件
-  async function uploadFile(file) {
-    const settings = await new Promise((resolve) => {
-      chrome.storage.sync.get('settings', (data) => resolve(data.settings));
-    });
-
-    if (!settings) {
-      throw new Error('请先配置图床设置');
-    }
-
-    switch (settings.service) {
-      case 'aliyun':
-        return await uploadToAliyun(file, settings.config);
-      case 'qiniu':
-        return await uploadToQiniu(file, settings.config);
-      case 'imgur':
-        return await uploadToImgur(file, settings.config);
-      case 'custom':
-        return await uploadToCustom(file, settings.config);
-      default:
-        throw new Error('不支持的图床服务');
+  async function uploadFile(file, uploadItem) {
+    if (settings.serviceType === 'imgur') {
+      return await uploadToImgur(file, uploadItem);
+    } else {
+      return await uploadToCustom(file, uploadItem);
     }
   }
 
-  // 阿里云上传
-  async function uploadToAliyun(file, config) {
-    const client = new OSS({
-      accessKeyId: config.accessKey,
-      accessKeySecret: config.secretKey,
-      bucket: config.bucket,
-      region: config.region
-    });
-
-    const fileName = `${Date.now()}-${file.name}`;
-    try {
-      const result = await client.put(fileName, file);
-      return result.url;
-    } catch (error) {
-      throw new Error(`阿里云上传失败: ${error.message}`);
+  // 上传到Imgur
+  async function uploadToImgur(file, uploadItem) {
+    if (!settings.imgur.clientId) {
+      throw new Error('请先配置Imgur Client ID');
     }
-  }
 
-  // 七牛云上传
-  async function uploadToQiniu(file, config) {
-    try {
-      // 使用七牛云SDK生成上传凭证（仅用于测试，生产环境建议使用后端生成）
-      const putPolicy = {
-        scope: config.bucket,
-        deadline: Math.floor(Date.now() / 1000) + 3600 // 1小时有效期
-      };
-      
-      // 计算上传凭证
-      const accessKey = config.accessKey;
-      const secretKey = config.secretKey;
-      const put_policy = JSON.stringify(putPolicy);
-      const encoded = btoa(put_policy);
-      const signed = CryptoJS.HmacSHA1(encoded, secretKey);
-      const encodedSign = signed.toString(CryptoJS.enc.Base64);
-      const uploadToken = `${accessKey}:${encodedSign}:${encoded}`;
-
-      const fileName = `${Date.now()}-${file.name}`;
-      const observable = qiniu.upload(file, fileName, uploadToken, {}, {
-        useCdnDomain: true,
-        region: null // 自动检测上传区域
-      });
-      
-      return new Promise((resolve, reject) => {
-        observable.subscribe({
-          next: (res) => {
-            // 上传进度，可以在这里添加进度显示
-            console.log('上传进度:', res.total.percent);
-          },
-          error: (err) => {
-            reject(new Error(`七牛云上传失败: ${err.message}`));
-          },
-          complete: (res) => {
-            const url = `${config.domain}/${res.key}`;
-            resolve(url);
-          }
-        });
-      });
-    } catch (error) {
-      throw new Error(`七牛云上传失败: ${error.message}`);
-    }
-  }
-
-  // Imgur上传
-  async function uploadToImgur(file, config) {
     const formData = new FormData();
     formData.append('image', file);
 
     const response = await fetch('https://api.imgur.com/3/image', {
       method: 'POST',
       headers: {
-        'Authorization': `Client-ID ${config.clientId}`
+        'Authorization': `Client-ID ${settings.imgur.clientId}`
       },
       body: formData
     });
 
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.data.error);
+    if (!response.ok) {
+      throw new Error('Imgur上传失败');
     }
 
+    const data = await response.json();
     return data.data.link;
   }
 
-  // 自定义图床上传
-  async function uploadToCustom(file, config) {
+  // 上传到自定义图床
+  async function uploadToCustom(file, uploadItem) {
+    if (!settings.custom.uploadUrl) {
+      throw new Error('请先配置上传地址');
+    }
+
     try {
-      const headers = JSON.parse(config.headers || '{}');
+      console.log('开始上传到自定义图床:', settings.custom.uploadUrl);
+      
+      // 创建FormData
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(config.apiUrl, {
-        method: 'POST',
-        headers,
-        body: formData
+      // 将文件转换为ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // 发送消息给background script处理上传
+      const response = await chrome.runtime.sendMessage({
+        type: 'uploadImage',
+        data: {
+          url: settings.custom.uploadUrl,
+          filename: file.name,
+          contentType: file.type,
+          data: Array.from(new Uint8Array(arrayBuffer))
+        }
       });
 
-      const data = await response.json();
-      const url = config.responsePath.split('.').reduce((obj, key) => obj[key], data);
+      console.log('上传响应:', response);
 
+      if (!response.success) {
+        throw new Error(response.error || '上传失败');
+      }
+
+      let data;
+      try {
+        data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      } catch (e) {
+        throw new Error('服务器返回的不是有效的JSON格式');
+      }
+
+      if (!settings.custom.responsePath) {
+        if (typeof data === 'string') {
+          return data;
+        }
+        throw new Error('未配置返回URL路径，且返回内容不是直接的URL字符串');
+      }
+
+      const url = getValueByPath(data, settings.custom.responsePath);
       if (!url) {
-        throw new Error('无法从响应中获取图片URL');
+        throw new Error(`在返回数据中未找到指定路径 ${settings.custom.responsePath} 的URL`);
+      }
+
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        throw new Error('返回的URL格式不正确，必须以http://或https://开头');
       }
 
       return url;
     } catch (error) {
+      console.error('上传错误:', error);
       throw new Error(`上传失败: ${error.message}`);
     }
   }
+
+  // 根据路径获取对象值
+  function getValueByPath(obj, path) {
+    if (!path) {
+      return obj;
+    }
+    
+    const keys = path.split('.');
+    let result = obj;
+    
+    for (const key of keys) {
+      if (result === null || result === undefined) {
+        throw new Error(`路径 ${path} 中的 ${key} 不存在`);
+      }
+      result = result[key];
+    }
+    
+    if (typeof result !== 'string') {
+      throw new Error(`路径 ${path} 的值不是字符串: ${JSON.stringify(result)}`);
+    }
+    
+    return result;
+  }
+
+  // 检查更新
+  async function checkForUpdates() {
+    try {
+      const response = await fetch('version.json');
+      const versionInfo = await response.json();
+    
+      const manifest = chrome.runtime.getManifest();
+      if (versionInfo.version !== manifest.version) {
+        elements.updateVersion.textContent = versionInfo.version;
+        elements.updateBanner.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('检查更新失败:', error);
+    }
+  }
+
+  // 处理更新
+  function handleUpdate() {
+    chrome.runtime.reload();
+  }
+
+  // 启动应用
+  init();
 });

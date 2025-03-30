@@ -5,77 +5,78 @@
   <title>ImageHost Uploader</title>
   <link rel="stylesheet" href="styles.css">
   <script src="libs/crypto-js.min.js"></script>
-  <script src="libs/aliyun-oss.min.js"></script>
-  <script src="libs/qiniu.min.js"></script>
 </head>
 <body>
-  <div class="container">
+  <div id="app">
+    <!-- 更新通知 -->
     <div id="updateBanner" class="update-banner" style="display: none;">
       <div class="update-content">
-        <span>🎉 新版本可用！</span>
-        <span id="updateVersion"></span>
-      </div>
-      <div class="update-actions">
-        <button id="updateBtn" class="update-btn">更新</button>
-        <button id="updateCloseBtn" class="update-close-btn">✕</button>
+        <span>新版本 <span id="updateVersion"></span> 已发布</span>
+        <div class="update-actions">
+          <button id="updateBtn" class="update-btn">更新</button>
+          <button id="updateCloseBtn" class="update-close-btn">✕</button>
+        </div>
       </div>
     </div>
 
-    <div class="header">
+    <!-- 主视图 -->
+    <div id="mainView">
       <h1>ImageHost Uploader</h1>
-      <div class="header-buttons">
-        <button id="settingsBtn">⚙️</button>
+      <div class="header">
+        <button id="settingsBtn" class="settings-btn">⚙️</button>
         <button id="closeBtn" class="close-btn">✕</button>
       </div>
+      
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-content">
+          <p>拖放图片到这里 或 点击上传</p>
+          <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+        </div>
+      </div>
+      
+      <div id="uploadList" class="upload-list"></div>
     </div>
 
-    <div id="mainView">
-      <div class="upload-area" id="dropZone">
-        <p>拖放图片到这里或点击上传</p>
-        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
-      </div>
-      <div class="paste-hint">
-        <p>您也可以直接粘贴图片 (Ctrl+V)</p>
-      </div>
-      <div id="uploadList"></div>
-    </div>
-
+    <!-- 设置视图 -->
     <div id="settingsView" style="display: none;">
       <h2>图床设置</h2>
-      <div class="service-select">
-        <select id="serviceType">
-          <option value="aliyun">阿里云 OSS</option>
-          <option value="qiniu">七牛云</option>
-          <option value="imgur">Imgur</option>
-          <option value="custom">自定义</option>
-        </select>
-      </div>
+      <div class="settings-form">
+        <div class="form-group">
+          <label for="serviceType">图床服务：</label>
+          <select id="serviceType">
+            <option value="custom">自定义图床</option>
+            <option value="imgur">Imgur</option>
+          </select>
+        </div>
 
-      <div id="aliyunConfig" class="service-config">
-        <input type="text" id="aliyunAccessKey" placeholder="Access Key">
-        <input type="password" id="aliyunSecretKey" placeholder="Secret Key">
-        <input type="text" id="aliyunBucket" placeholder="Bucket">
-        <input type="text" id="aliyunRegion" placeholder="Region">
-      </div>
+        <!-- Imgur设置 -->
+        <div id="imgurSettings" class="service-settings">
+          <div class="form-group">
+            <label for="imgurClientId">Client ID：</label>
+            <input type="text" id="imgurClientId" placeholder="输入你的Imgur Client ID">
+            <p class="help-text">
+              <a href="https://api.imgur.com/oauth2/addclient" target="_blank">点击这里</a>
+              注册Imgur API，获取Client ID
+            </p>
+          </div>
+        </div>
 
-      <div id="qiniuConfig" class="service-config" style="display: none;">
-        <input type="text" id="qiniuAccessKey" placeholder="Access Key">
-        <input type="password" id="qiniuSecretKey" placeholder="Secret Key">
-        <input type="text" id="qiniuBucket" placeholder="Bucket">
-        <input type="text" id="qiniuDomain" placeholder="Domain">
-      </div>
+        <!-- 自定义图床设置 -->
+        <div id="customSettings" class="service-settings">
+          <div class="form-group">
+            <label for="customUploadUrl">上传地址：</label>
+            <input type="text" id="customUploadUrl" placeholder="例如：https://api.example.com/upload">
+            <p class="help-text">图片将以 multipart/form-data 格式上传，字段名为 file</p>
+          </div>
+          <div class="form-group">
+            <label for="customResponsePath">返回URL路径：</label>
+            <input type="text" id="customResponsePath" placeholder="例如：url 或 data.url">
+            <p class="help-text">指定返回JSON中图片URL的位置，支持多级路径，如：data.url</p>
+          </div>
+        </div>
 
-      <div id="imgurConfig" class="service-config" style="display: none;">
-        <input type="text" id="imgurClientId" placeholder="Client ID">
+        <button id="saveSettings" class="save-btn">保存设置</button>
       </div>
-
-      <div id="customConfig" class="service-config" style="display: none;">
-        <input type="text" id="customApiUrl" placeholder="上传 API 地址">
-        <input type="text" id="customHeaders" placeholder="自定义请求头 (JSON)">
-        <input type="text" id="customResponsePath" placeholder="返回 URL 路径 (例: data.url)">
-      </div>
-
-      <button id="saveSettings">保存设置</button>
     </div>
   </div>
   <script src="popup.js"></script>

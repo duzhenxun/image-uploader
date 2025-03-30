@@ -144,3 +144,45 @@ chrome.runtime.onInstalled.addListener((details) => {
   // 初始化版本检查
   initVersionCheck();
 });
+
+// 处理图片上传
+async function handleImageUpload(data) {
+  try {
+    // 创建FormData
+    const formData = new FormData();
+    const blob = new Blob([new Uint8Array(data.data)], { type: data.contentType });
+    formData.append('file', blob, data.filename);
+    
+    // 发送请求
+    const response = await fetch(data.url, {
+      method: 'POST',
+      body: formData
+    });
+
+    // 读取响应
+    const responseText = await response.text();
+    console.log('服务器响应:', responseText);
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+    }
+
+    return {
+      success: true,
+      data: responseText
+    };
+  } catch (error) {
+    console.error('上传错误:', error);
+    throw error;
+  }
+}
+
+// 监听来自popup的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'uploadImage') {
+    handleImageUpload(message.data)
+      .then(sendResponse)
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // 表示我们会异步发送响应
+  }
+});

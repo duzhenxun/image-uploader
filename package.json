@@ -1,10 +1,9 @@
 {
-  "name": "image-uploader-extension",
-  "version": "1.0.0",
-  "description": "Browser extension for image uploading",
+  "name": "image-uploader",
+  "version": "0.9.0",
+  "description": "A browser extension for uploading images",
+  "private": true,
   "dependencies": {
-    "ali-oss": "^6.18.1",
-    "crypto-js": "^4.2.0",
-    "qiniu-js": "^3.4.1"
+    "crypto-js": "^4.1.1"
   }
 }

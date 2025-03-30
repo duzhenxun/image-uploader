@@ -1,12 +1,60 @@
+/* 全局样式 */
 body {
-  width: 400px;
   margin: 0;
-  padding: 15px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-width: 400px;
+  max-width: 800px;
+  background: #f5f5f5;
 }
 
-.container {
-  width: 100%;
+#app {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* 更新横幅 */
+.update-banner {
+  background: #f0f7ff;
+  padding: 12px 16px;
+  border-bottom: 1px solid #cce5ff;
+  display: none;
+}
+
+.update-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.update-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.update-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.update-close-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 16px;
+}
+
+/* 主视图 */
+#mainView {
+  padding: 20px;
 }
 
 .header {
@@ -16,180 +64,196 @@ body {
   margin-bottom: 20px;
 }
 
-.header h1 {
+h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
+  color: #333;
 }
 
-.header-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-#settingsBtn,
-#closeBtn {
-  background: none;
+.settings-btn, .close-btn {
+  background: transparent;
   border: none;
   font-size: 20px;
-  padding: 5px;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  padding: 8px;
+  border-radius: 4px;
 }
 
-#settingsBtn:hover,
-#closeBtn:hover {
-  background: #eee;
+.settings-btn:hover, .close-btn:hover {
+  background: #f0f0f0;
 }
 
-#closeBtn {
-  color: #666;
-}
-
-#closeBtn:hover {
-  background: #ff4444;
-  color: white;
-}
-
-.upload-area {
+/* 拖放区域 */
+.drop-zone {
   border: 2px dashed #ccc;
   border-radius: 8px;
-  padding: 20px;
+  padding: 40px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
+  margin-bottom: 20px;
 }
 
-.upload-area:hover {
-  border-color: #666;
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: #007bff;
+  background: #f8f9fa;
 }
 
-.paste-hint {
-  text-align: center;
+.drop-zone p {
+  margin: 0;
   color: #666;
-  margin: 10px 0;
 }
 
-#uploadList {
-  margin-top: 15px;
+/* 上传列表 */
+.upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .upload-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border: 1px solid #eee;
-  margin-bottom: 8px;
-  border-radius: 4px;
-}
-
-.upload-item img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  margin-right: 10px;
-}
-
-.upload-item .url {
-  flex-grow: 1;
-  margin-right: 10px;
-}
-
-.upload-item button {
-  padding: 4px 8px;
-}
-
-.service-config {
-  margin-top: 15px;
-}
-
-.service-config input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-button {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-.update-banner {
-  background-color: #f0f7ff;
-  border: 1px solid #bae3ff;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.update-content {
+.upload-item:hover {
+  background: #e9ecef;
+}
+
+.upload-item .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-item .filename {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-item .url {
+  color: #666;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.upload-item .status {
+  color: #666;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.upload-item .progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #007bff;
+  width: 0;
+  transition: width 0.3s ease;
+}
+
+.upload-item.error {
+  background: #fff3f3;
+}
+
+.upload-item.error .status {
+  color: #dc3545;
+}
+
+/* 设置视图 */
+#settingsView {
+  padding: 20px;
+}
+
+#settingsView h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.settings-form {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.update-content span:first-child {
-  font-weight: bold;
-  color: #1890ff;
+.form-group label {
+  font-weight: 500;
+  color: #333;
 }
 
-.update-actions {
-  display: flex;
-  gap: 8px;
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-.update-btn {
-  background-color: #1890ff;
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-group .help-text {
+  font-size: 12px;
+  color: #666;
+  margin: 4px 0 0 0;
+}
+
+.form-group .help-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.form-group .help-text a:hover {
+  text-decoration: underline;
+}
+
+.service-settings {
+  display: none;
+  border-left: 2px solid #007bff;
+  padding-left: 16px;
+  margin: 8px 0;
+}
+
+.save-btn {
+  background: #007bff;
   color: white;
   border: none;
-  padding: 4px 12px;
+  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
 }
 
-.update-btn:hover {
-  background-color: #40a9ff;
-}
-
-.update-close-btn {
-  background: none;
-  border: none;
-  color: #999;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-}
-
-.update-close-btn:hover {
-  background-color: #f0f0f0;
-  color: #666;
+.save-btn:hover {
+  background: #0056b3;
 }
